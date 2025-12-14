@@ -11,8 +11,30 @@ export const RegisterForm = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [role, setRole] = useState("");
+  const [errors, setErrors] = useState({});
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!name.trim()) newErrors.name = "Name is required";
+    if (!email.trim()) newErrors.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = "Email is invalid";
+    if (!password) newErrors.password = "Password is required";
+    else if (password.length < 6)
+      newErrors.password = "Password must be at least 6 characters";
+    if (!confirmPassword)
+      newErrors.confirmPassword = "Confirm password is required";
+    if (!role) newErrors.role = "Role is required";
+    return newErrors;
+  };
 
   const handleRegister = async () => {
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+    setErrors({});
+
     if (password !== confirmPassword) {
       toast.error("Passwords do not match");
       return;
@@ -21,11 +43,16 @@ export const RegisterForm = () => {
     const payload = { name, email, password, role };
 
     try {
-      const response = await fetch("http://localhost:5000/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const response = await fetch(
+        `${
+          process.env.REACT_APP_BACKEND_URL || "http://localhost:5000"
+        }/auth/register`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
       const data = await response.json();
 
@@ -33,16 +60,13 @@ export const RegisterForm = () => {
         throw new Error(data.message || "Registration failed");
       }
 
-      console.log("data", data);
-
       toast.success("Registration successful 🎉");
-      localStorage.setItem("auth", JSON.stringify({ role: data.role }));
+      localStorage.setItem(
+        "auth",
+        JSON.stringify({ role: data.role, token: data.token, user: data.user })
+      );
       setTimeout(() => {
-        if (data.role === "admin") {
-          navigate("/admin/dashboard");
-        } else {
-          navigate("/employee/dashboard");
-        }
+        navigate("/auth/login");
       }, 2000);
     } catch (error) {
       toast.error(error.message);
@@ -57,11 +81,13 @@ export const RegisterForm = () => {
         <div className="input-group">
           <label>Full Name</label>
           <input value={name} onChange={(e) => setName(e.target.value)} />
+          {errors.name && <span className="error">{errors.name}</span>}
         </div>
 
         <div className="input-group">
           <label>Email</label>
           <input value={email} onChange={(e) => setEmail(e.target.value)} />
+          {errors.email && <span className="error">{errors.email}</span>}
         </div>
 
         <div className="input-group">
@@ -71,6 +97,7 @@ export const RegisterForm = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
+          {errors.password && <span className="error">{errors.password}</span>}
         </div>
 
         <div className="input-group">
@@ -80,6 +107,9 @@ export const RegisterForm = () => {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
           />
+          {errors.confirmPassword && (
+            <span className="error">{errors.confirmPassword}</span>
+          )}
         </div>
 
         <div className="input-group">
@@ -89,6 +119,7 @@ export const RegisterForm = () => {
             <option value="employee">Employee</option>
             <option value="admin">Admin</option>
           </select>
+          {errors.role && <span className="error">{errors.role}</span>}
         </div>
 
         <button type="button" onClick={handleRegister}>

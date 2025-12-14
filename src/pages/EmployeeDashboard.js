@@ -1,38 +1,84 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { clearAuthData } from "../utils/auth";
 import TaskTable from "../components/TaskTable";
 import "./EmployeeDashboard.css";
 
 const EmployeeDashboard = () => {
-  const [tasks, setTasks] = useState([
-    {
-      id: 1,
-      title: "Complete Project Report",
-      assignedTo: "Employee 1",
-      status: "Pending",
-      dueDate: "2025-12-20",
-    },
-    {
-      id: 2,
-      title: "Team Meeting",
-      assignedTo: "Employee 1",
-      status: "In Progress",
-      dueDate: "2025-12-15",
-    },
-  ]);
+  const navigate = useNavigate();
+  const [tasks, setTasks] = useState([]);
+  const handleLogout = () => {
+    clearAuthData();
+    navigate("/auth/login");
+  };
 
-  const updateTask = (updatedTask) => {
-    setTasks((prev) =>
-      prev.map((task) => (task.id === updatedTask.id ? updatedTask : task))
-    );
+  useEffect(() => {
+    // Fetch employee-specific tasks if needed
+    const fetchEmployeeTasks = async () => {
+      const auth = JSON.parse(localStorage.getItem("auth"));
+      const response = await fetch(
+        `${
+          process.env.REACT_APP_BACKEND_URL || "http://localhost:5000"
+        }/users/${auth.user.id}/tasks`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${auth.token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const data = await response.json();
+      setTasks(data.tasks);
+    };
+    fetchEmployeeTasks();
+  }, []);
+  const handleStatusChange = async (id, status) => {
+    const auth = JSON.parse(localStorage.getItem("auth"));
+    try {
+      const response = await fetch(
+        `${
+          process.env.REACT_APP_BACKEND_URL || "http://localhost:5000"
+        }/tasks/${id}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${auth.token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status: status }),
+        }
+      );
+      if (response.ok) {
+        setTasks((prev) =>
+          prev.map((task) =>
+            task.task_id === id ? { ...task, task_status: status } : task
+          )
+        );
+      } else {
+        console.error("Failed to update status");
+      }
+    } catch (error) {
+      console.error("Error updating status:", error);
+    }
   };
 
   return (
     <div className="employee-dashboard-container">
-      <h1>Employee Dashboard</h1>
+      <div className="header">
+        <h1>Employee Dashboard</h1>
+        <button onClick={handleLogout} className="logout-btn">
+          Logout
+        </button>
+      </div>
 
       <div className="section">
         <h2>My Tasks</h2>
-        <TaskTable tasks={tasks} onEdit={updateTask} />
+        <TaskTable
+          tasks={tasks}
+          onStatusChange={handleStatusChange}
+          enableEdit={false}
+        />
       </div>
     </div>
   );

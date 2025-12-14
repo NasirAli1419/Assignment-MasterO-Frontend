@@ -1,16 +1,24 @@
 import { useState } from "react";
 
-const TaskTable = ({ tasks, onEdit }) => {
+const TaskTable = ({ tasks, onStatusChange, onEdit, enableEdit = false }) => {
   const [editingId, setEditingId] = useState(null);
   const [editData, setEditData] = useState({});
 
+  const handleStatusChange = (id, status) => {
+    if (onStatusChange) {
+      onStatusChange(id, status);
+    }
+  };
+
   const startEdit = (task) => {
-    setEditingId(task.id);
+    setEditingId(task.task_id);
     setEditData(task);
   };
 
   const saveEdit = () => {
-    onEdit(editData);
+    if (onEdit) {
+      onEdit(editData);
+    }
     setEditingId(null);
   };
 
@@ -25,77 +33,85 @@ const TaskTable = ({ tasks, onEdit }) => {
             <th>Assigned To</th>
             <th>Status</th>
             <th>Due Date</th>
-            <th>Edit</th>
+            <th>Description</th>
+            {enableEdit && <th>Edit</th>}
           </tr>
         </thead>
 
         <tbody>
           {tasks.map((task) => (
-            <tr key={task.id}>
+            <tr key={task.task_id}>
               <td>
-                {editingId === task.id ? (
+                {enableEdit && editingId === task.task_id ? (
                   <input
-                    value={editData.title}
+                    value={editData.task_title || ""}
                     onChange={(e) =>
-                      setEditData({ ...editData, title: e.target.value })
+                      setEditData({ ...editData, task_title: e.target.value })
                     }
                   />
                 ) : (
-                  task.title
+                  task.task_title
                 )}
               </td>
-
+              <td>{task.assigned_user}</td>
               <td>
-                {editingId === task.id ? (
-                  <input
-                    value={editData.assignedTo}
-                    onChange={(e) =>
-                      setEditData({ ...editData, assignedTo: e.target.value })
-                    }
-                  />
+                {enableEdit ? (
+                  editingId === task.task_id ? (
+                    <select
+                      value={editData.task_status || ""}
+                      onChange={(e) =>
+                        setEditData({
+                          ...editData,
+                          task_status: e.target.value,
+                        })
+                      }
+                    >
+                      <option>pending</option>
+                      <option>in_progress</option>
+                      <option>completed</option>
+                    </select>
+                  ) : (
+                    task.task_status
+                  )
                 ) : (
-                  task.assignedTo
-                )}
-              </td>
-
-              <td>
-                {editingId === task.id ? (
                   <select
-                    value={editData.status}
+                    value={task.task_status}
                     onChange={(e) =>
-                      setEditData({ ...editData, status: e.target.value })
+                      handleStatusChange(task.task_id, e.target.value)
                     }
                   >
-                    <option>Pending</option>
-                    <option>In Progress</option>
-                    <option>Completed</option>
+                    <option>pending</option>
+                    <option>in_progress</option>
+                    <option>completed</option>
                   </select>
-                ) : (
-                  task.status
                 )}
               </td>
-
               <td>
-                {editingId === task.id ? (
-                  <input
-                    type="date"
-                    value={editData.dueDate}
+                {task.due_date
+                  ? new Date(task.due_date).toLocaleDateString("en-US")
+                  : ""}
+              </td>
+              <td>
+                {enableEdit && editingId === task.task_id ? (
+                  <textarea
+                    value={editData.description || ""}
                     onChange={(e) =>
-                      setEditData({ ...editData, dueDate: e.target.value })
+                      setEditData({ ...editData, description: e.target.value })
                     }
                   />
                 ) : (
-                  task.dueDate
+                  task.description || ""
                 )}
               </td>
-
-              <td>
-                {editingId === task.id ? (
-                  <button onClick={saveEdit}>Save</button>
-                ) : (
-                  <button onClick={() => startEdit(task)}>Edit</button>
-                )}
-              </td>
+              {enableEdit && (
+                <td>
+                  {editingId === task.task_id ? (
+                    <button onClick={saveEdit}>Save</button>
+                  ) : (
+                    <button onClick={() => startEdit(task)}>Edit</button>
+                  )}
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

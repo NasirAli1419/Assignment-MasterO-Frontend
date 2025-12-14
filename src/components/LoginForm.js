@@ -12,19 +12,26 @@ export const LoginForm = () => {
   const handleLogin = async () => {
     const payload = { email, password };
     try {
-      const response = await fetch("http://localhost:5000/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const response = await fetch(
+        `${
+          process.env.REACT_APP_BACKEND_URL || "http://localhost:5000"
+        }/auth/login`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
       const data = await response.json();
-      console.log("DaTAA-->", data);
       if (!response.ok) {
         throw new Error(data.message || "Login failed");
       }
 
       toast.success("Login Successfull 🎉");
-      localStorage.setItem("auth", JSON.stringify({ role: data.role }));
+      localStorage.setItem(
+        "auth",
+        JSON.stringify({ role: data.role, token: data.token, user: data.user })
+      );
       setTimeout(() => {
         if (data.role === "admin") {
           navigate("/admin/dashboard");
