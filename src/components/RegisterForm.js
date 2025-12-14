@@ -61,10 +61,6 @@ export const RegisterForm = () => {
       }
 
       toast.success("Registration successful 🎉");
-      localStorage.setItem(
-        "auth",
-        JSON.stringify({ role: data.role, token: data.token, user: data.user })
-      );
       setTimeout(() => {
         navigate("/auth/login");
       }, 2000);

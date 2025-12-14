@@ -29,7 +29,7 @@ const EmployeeDashboard = () => {
         }
       );
       const data = await response.json();
-      setTasks(data.tasks);
+      setTasks(data.tasks || []);
     };
     fetchEmployeeTasks();
   }, []);

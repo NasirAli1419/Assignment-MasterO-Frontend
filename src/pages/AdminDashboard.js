@@ -27,7 +27,7 @@ const AdminDashboard = () => {
       }
     );
     const data = await response.json();
-    setTasks(data.Tasks);
+    setTasks(data.Tasks || []);
   };
 
   useEffect(() => {

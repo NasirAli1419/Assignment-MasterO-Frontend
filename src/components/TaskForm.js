@@ -60,7 +60,7 @@ const TaskForm = ({ onTaskCreated }) => {
   return (
     <div className="task-form-container">
       <div className="employees-section">
-        <h2>Employees</h2>
+        <h2>Users</h2>
         <ul className="employees-list">
           {employees.map((emp) => (
             <li key={emp.id}>{emp.name}</li>
